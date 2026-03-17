@@ -31,16 +31,16 @@ Una tienda online quiere un agente que atienda consultas de clientes sobre el es
 
 | Componente | Descripción |
 |------------|-------------|
-| **Percepción** (¿Qué información recibe?) | Mensaje del cliente (chat/email/WhatsApp) y, cuando proceda, identificadores del pedido (número de pedido, email, teléfono) |
-| Fuentes de datos | Chat en vivo/WhatsApp/email, base de datos de pedidos, historial de interacciones, política de devoluciones, catálogo de productos |
-| Formato de entrada | Texto libre (lenguaje natural) + metadatos (ID pedido, email, timestamps) |
-| **Decisión** (¿Cómo procesa?) | Un LLM clasifica la intención (estado de pedido, devolución, cambio, incidencia), extrae entidades (ID pedido, producto, fecha), consulta sistemas y elige la acción (responder / iniciar devolución / crear ticket / escalar) |
-| Modelo de IA utilizado | GPT-4o-mini (balance coste/rendimiento para soporte) |
-| Instrucciones clave del prompt | "Eres un agente de soporte de [tienda]. Sé amable y profesional. Verifica el estado del pedido antes de responder. No inventes datos. Si hay temas legales, seguridad, fraude o petición de humano, escala." |
-| Criterios para escalar a humano | Petición explícita, temas legales, fraude/seguridad, queja repetida (>2 intentos sin resolver), devoluciones de alto valor (p.ej. >200€), ambigüedad alta o falta de datos para verificar |
-| **Acción** (¿Qué ejecuta?) | Responder con estado del pedido, iniciar devolución en el sistema, crear/actualizar ticket, enviar confirmaciones, derivar a humano con contexto |
-| Acciones posibles | Consultar tracking/ERP, crear ticket (Zendesk/Freshdesk), enviar email/WhatsApp, actualizar CRM, etiquetar prioridad |
-| Sistemas externos que necesita | BD/ERP de pedidos, API de logística/tracking, sistema de tickets, CRM, email/WhatsApp provider |
+| **Percepción** (¿Qué información recibe?) | Mensaje del cliente (chat/email/WhatsApp) + identificadores (nº pedido, email, teléfono) si los aporta |
+| Fuentes de datos | Chat en vivo/WhatsApp/email, base de datos de pedidos, historial de tickets, política de devoluciones |
+| Formato de entrada | Texto libre (lenguaje natural) + datos estructurados del pedido (JSON) |
+| **Decisión** (¿Cómo procesa?) | Un LLM clasifica la intención (estado pedido/devolución/queja), extrae entidades (nº pedido, producto, fecha), consulta sistemas y elige acción; si hay señales de riesgo, escala |
+| Modelo de IA utilizado | GPT-4o-mini (buen balance coste/rendimiento para soporte) |
+| Instrucciones clave del prompt | “Eres soporte de [tienda]. Responde amable y profesional. Antes de responder, consulta estado del pedido. Si hay temas legales/seguridad/amenazas o petición de humano, escala.” |
+| Criterios para escalar a humano | Solicitud explícita, temas legales/seguridad, insultos/amenazas, queja repetida (>2 intentos), devoluciones de alto valor (>200€) o baja confianza |
+| **Acción** (¿Qué ejecuta?) | Responder con estado del pedido, iniciar devolución simple, crear/actualizar ticket, notificar a humano, enviar confirmaciones |
+| Acciones posibles | Consultar API de tracking, crear ticket (Zendesk/Freshdesk), enviar email/WhatsApp, actualizar CRM/ERP |
+| Sistemas externos que necesita | BD de pedidos/ERP, tracking/logística, sistema de tickets, CRM, email/WhatsApp API |
 
 ### Escenario B: Agente de Recursos Humanos
 
@@ -48,9 +48,9 @@ Una empresa quiere automatizar la primera fase de selección de candidatos: reci
 
 | Componente | Descripción |
 |------------|-------------|
-| **Percepción** | CVs recibidos (email/formulario/ATS), descripción del puesto y requisitos, (opcional) histórico de candidatos/contrataciones |
-| **Decisión** | Extrae y normaliza datos del CV (experiencia, formación, skills), compara con requisitos, asigna puntuación/encaje y decide: avanzar, descartar o enviar a revisión humana |
-| **Acción** | Enviar respuesta personalizada (entrevista/rechazo/solicitud de info), actualizar ATS, notificar a reclutador sobre candidatos destacados |
+| **Percepción** | CVs recibidos por email/formulario, descripción del puesto y requisitos, historial de candidatos/entrevistas |
+| **Decisión** | Extraer información clave (experiencia, educación, skills), compararla con requisitos, puntuar idoneidad y decidir: pasa / no pasa / revisión humana |
+| **Acción** | Enviar respuesta personalizada, actualizar ATS/CRM, notificar a reclutador con shortlist y razones |
 
 ### Escenario C: Agente de Marketing de Contenidos
 
@@ -58,9 +58,9 @@ Un equipo de marketing necesita un agente que monitorice menciones de su marca e
 
 | Componente | Descripción |
 |------------|-------------|
-| **Percepción** | Menciones de marca en redes (X/Instagram/LinkedIn) vía APIs o herramientas de social listening, con texto, autor, fecha, enlace y (si existe) contenido multimedia |
-| **Decisión** | Analiza sentimiento (pos/neg/neutro), detecta intención (queja, duda, elogio), estima urgencia (crisis vs. mención casual) y redacta borrador alineado con el tono de marca |
-| **Acción** | Guardar mención+análisis, enviar borrador al community manager (Slack/email), alertar a equipo de crisis si procede, generar reportes periódicos |
+| **Percepción** | Menciones en X/Instagram/LinkedIn (APIs o social listening), contexto (hilo, autor), alertas en tiempo real o monitorización periódica |
+| **Decisión** | Analizar sentimiento (pos/neg/neu), detectar intención/urgencia (crisis vs comentario), decidir si responder y redactar borrador alineado con tono de marca |
+| **Acción** | Guardar mención+análisis, enviar borrador por Slack/email al community manager, escalar al equipo si hay crisis, generar informes |
 
 ### Escenario D: Agente Educativo (Tutor IA)
 
@@ -68,23 +68,16 @@ Una universidad quiere un agente que ayude a estudiantes con dudas sobre una asi
 
 | Componente | Descripción |
 |------------|-------------|
-| **Percepción** | Pregunta del estudiante por chat, contexto (tema/tema de la asignatura), historial de interacciones, materiales del curso (apuntes, prácticas, slides) |
-| **Decisión** | Interpreta la duda, estima el nivel, recupera información relevante (RAG sobre materiales), genera explicación adaptada y decide recursos recomendados o escalado a tutoría humana |
-| **Acción** | Responder con explicación, proponer ejercicios/lecturas concretas, compartir enlaces, registrar la interacción y (si hay patrón) alertar al profesor/tutor |
+| **Percepción** | Pregunta del estudiante (chat), historial de interacciones, materiales del curso (apuntes/diapositivas/ejercicios) |
+| **Decisión** | Interpretar la duda, detectar nivel, buscar en materiales relevantes (RAG), generar explicación adaptada y decidir recursos/ejercicios recomendados |
+| **Acción** | Responder con explicación y pasos, compartir enlaces/recursos, proponer ejercicios, registrar interacción y alertar al profesor si hay patrones de dificultad |
 
 ### Preguntas de Reflexión
 
 1. ¿Cuál de los cuatro escenarios tiene la percepción más compleja? ¿Por qué? ¿Cómo afecta la complejidad de la percepción al diseño del agente?
-   **Respuesta:** El escenario C (Marketing) suele ser el más complejo: múltiples fuentes en tiempo real, formatos variados (texto + multimedia), ruido (spam/ironía) y volumen alto. Esto obliga a diseñar filtrado, rate limiting, normalización de datos, deduplicación y reglas de priorización antes (o junto) al LLM.
-
 2. En el Escenario A, el agente debe decidir cuándo escalar a un humano. ¿Qué criterios usarías para esta decisión? ¿Es mejor pecar de cauteloso (escalar demasiado) o de autónomo (intentar resolver todo)?
-   **Respuesta:** Criterios: solicitud explícita, temas legales/seguridad/fraude, alta incertidumbre (falta de datos), alto impacto económico, queja repetida, lenguaje agresivo o posible crisis. Al principio es mejor ser cauteloso (escalar más) y luego ampliar autonomía con métricas (tasa de resolución, CSAT, retrabajo, errores).
-
 3. Compara los Escenarios B y C: ambos analizan texto, pero uno analiza documentos estructurados (CVs) y otro texto libre (redes sociales). ¿Cómo cambia esto el componente de decisión?
-   **Respuesta:** En CVs hay estructura semi-estándar y extracción más “determinista” (campos/skills), por lo que la decisión puede apoyarse en scoring y reglas. En redes sociales hay ambigüedad, jerga, ironía y contexto cultural; el modelo necesita más robustez lingüística, detección de intención y gestión de riesgo reputacional.
-
 4. Si tuvieras que elegir un escenario para implementar como tu primer agente en n8n, ¿cuál elegirías y por qué? Considera la complejidad técnica, el valor de negocio y los riesgos.
-   **Respuesta:** Empezaría por el escenario A (Soporte) con alcance acotado (estado de pedido + devoluciones simples + escalado). Tiene alto valor (reduce tickets), integraciones claras (ERP/tracking/tickets) y se controla el riesgo con políticas de escalado y respuestas basadas en datos verificados.
 
 ---
 
@@ -139,30 +132,14 @@ Basándoos en la tabla, responded las siguientes preguntas:
 2. **Factor determinante**: ¿Cuál fue el criterio que más influyó en vuestra decisión? ¿Cambiaría la decisión si ese criterio no fuera importante?
 3. **Trade-offs**: ¿Qué desventajas tiene la plataforma elegida frente a las otras? ¿Cómo las mitigaríais?
 
-**Respuestas (ejemplo):**
-
-1. **Plataforma recomendada**: n8n. Destaca en los criterios más ponderados para este caso: despliegue on‑premise (datos sanitarios), coste (presupuesto limitado) y mejor encaje para agentes/IA.
-
-2. **Factor determinante**: on‑premise / control de datos. Si este criterio no fuera importante (datos no sensibles o nube aceptable), la decisión se equilibraría y Make/Zapier podrían ganar por facilidad e integraciones.
-
-3. **Trade-offs**: n8n requiere más perfil técnico y mantenimiento (Docker, backups, upgrades) y puede tener menos integraciones “listas” que Zapier. Mitigación: usar templates, nodos HTTP Request, documentación, y (si aplica) n8n Cloud o una instancia gestionada.
-
 ### Parte C: Escenario Alternativo (3 min)
 
 Ahora imaginad que el caso de uso cambia: en lugar de una clínica dental con datos sensibles, se trata de una **tienda de ropa online** que solo necesita automatizar publicaciones en Instagram y responder mensajes directos. ¿Cambiaría vuestra recomendación? ¿Por qué?
-
-**Respuesta (ejemplo):** Sí. En ese escenario, Zapier (o Make) suele encajar mejor: menor necesidad de on‑premise, foco en integraciones de marketing/redes, y prioridad en rapidez de implementación por un equipo no técnico.
 
 ### Preguntas de Reflexión
 
 1. ¿En qué situaciones elegirías Zapier a pesar de su mayor coste? ¿Cuándo es la simplicidad más valiosa que la flexibilidad?
 2. El hecho de que n8n sea open source, ¿es siempre una ventaja? ¿Qué desafíos implica mantener una instancia propia frente a usar un servicio gestionado?
-
-**Respuestas (ejemplo):**
-
-1. Elegiría Zapier cuando el equipo no es técnico, el time‑to‑value es crítico, las integraciones ya existen “out of the box” y el volumen de automatizaciones es moderado. La simplicidad es más valiosa cuando el coste del mantenimiento/errores supera el ahorro por usar una plataforma más flexible.
-
-2. No siempre es ventaja: open source da control y evita vendor lock‑in, pero implica operación (actualizaciones, seguridad, backups, monitoreo), responsabilidad sobre disponibilidad y cumplimiento. Un servicio gestionado reduce carga operativa a cambio de coste y menor control.
 
 ---
 
@@ -285,16 +262,11 @@ Modifica el valor de `nota_final` a `3.5` y vuelve a ejecutar el workflow. Verif
 ### Preguntas de Reflexión
 
 1. ¿Qué ocurre si añades una segunda condición al nodo IF (por ejemplo, `asistencia_porcentaje >= 80`)? ¿Cómo combinarías ambas condiciones (AND/OR)?
+   - **Respuesta**: El IF evaluaría también esa condición. Si quieres “aprobado solo si nota>=5 y asistencia>=80”, usarías **AND**. Si quieres “aprobado si cumple al menos una”, usarías **OR**.
 2. El nodo Set define datos estáticos. En un workflow real, ¿de dónde vendrían estos datos? Nombra al menos 3 fuentes posibles (ej: formulario web, base de datos, API...).
+   - **Respuesta**: Un formulario (Webhook), una base de datos/ERP, una API (LMS/CRM), un fichero (CSV/Google Sheets), o un trigger de email.
 3. ¿Cómo modificarías este workflow para procesar una lista de 10 estudiantes en lugar de uno solo? (Pista: el nodo Set puede producir múltiples items)
-
-**Respuestas (ejemplo):**
-
-1. Con dos condiciones puedes combinarlas con **AND** (ambas deben cumplirse) o **OR** (basta con una). En n8n, esto se hace añadiendo otra condición en el nodo IF y eligiendo la combinación. Para aprobado “estricto” usaría AND: `nota_final >= 5` **y** `asistencia_porcentaje >= 80`.
-
-2. Fuentes típicas: (a) formulario web (Typeform/Google Forms/Webhook), (b) base de datos (PostgreSQL/MySQL), (c) API de un LMS/ERP académico, (d) fichero CSV/Google Sheets, (e) email entrante.
-
-3. Haría que el nodo Set (o la fuente real) devuelva **10 items** (uno por estudiante). El nodo IF evaluará cada item de forma independiente y las ramas true/false producirán listas de resultados por estudiante.
+   - **Respuesta**: Haría que el nodo Set (o un nodo de entrada) genere **10 items** (array de objetos). El IF y los Set finales se ejecutan por item automáticamente (uno por estudiante).
 
 ---
 
@@ -341,32 +313,44 @@ Dibuja (en papel o en una herramienta de diagramas) el workflow completo identif
 ```
 Nodo 1: [Schedule Trigger]
    ├── Tipo: Schedule Trigger
-   ├── Configuración: Lunes a Viernes, 8:00, Europe/Madrid
+   ├── Configuración: Cron `0 8 * * 1-5`, timezone Europe/Madrid
    ├── Entrada: Ninguna (es el trigger)
    └── Salida: Timestamp de ejecución
 
-Nodo 2: [HTTP Request - NewsAPI]
+Nodo 2: [HTTP Request - NewsAPI (ES)]
    ├── Tipo: HTTP Request
-   ├── Configuración: GET https://newsapi.org/v2/everything (q + filtros, pageSize=10)
-   ├── Entrada: Timestamp
-   └── Salida: Artículos (title, description, url, source, publishedAt)
+   ├── Configuración: NewsAPI (idioma ES), q + sortBy=publishedAt + pageSize=10
+   ├── Entrada: Timestamp del trigger
+   └── Salida: Lista de artículos (título, descripción, url, fuente)
 
-Nodo 3: [IF - ¿Hay noticias?]
+Nodo 3: [HTTP Request - NewsAPI (EN)]
+   ├── Tipo: HTTP Request
+   ├── Configuración: NewsAPI (idioma EN), q + sortBy=publishedAt + pageSize=10
+   ├── Entrada: Timestamp del trigger
+   └── Salida: Lista de artículos (título, descripción, url, fuente)
+
+Nodo 4: [Merge - Unir Artículos]
+   ├── Tipo: Merge
+   ├── Configuración: Mode: Append (concatenar listas de artículos)
+   ├── Entrada: Artículos ES + Artículos EN
+   └── Salida: Lista combinada de artículos
+
+Nodo 5: [IF - ¿Hay artículos?]
    ├── Tipo: IF
-   ├── Configuración: {{ $json.totalResults }} is greater than 0
-   ├── Entrada: Respuesta de NewsAPI
-   └── Salida: true (hay noticias) / false (no hay)
+   ├── Configuración: ¿Hay artículos? (longitud de array > 0)
+   ├── Entrada: Lista combinada
+   └── Salida: true → continuar / false → Stop
 
-Nodo 4: [OpenAI - Generar Resumen]
-   ├── Tipo: OpenAI (o HTTP Request a /chat/completions)
-   ├── Configuración: Modelo (p.ej. gpt-4o-mini) + system prompt de resumen
-   ├── Entrada: Lista de artículos filtrados
-   └── Salida: Resumen (HTML o Markdown)
+Nodo 6: [OpenAI - Generar Resumen]
+   ├── Tipo: OpenAI (o HTTP Request a OpenAI/OpenRouter)
+   ├── Configuración: System Prompt + temperatura moderada
+   ├── Entrada: Lista de artículos
+   └── Salida: Resumen en Markdown
 
-Nodo 5: [Gmail - Enviar Resumen]
+Nodo 7: [Gmail - Enviar Resumen]
    ├── Tipo: Gmail (o Email)
-   ├── Configuración: To equipo@..., subject con fecha, body HTML
-   ├── Entrada: Texto del resumen
+   ├── Configuración: To/Subject/Body
+   ├── Entrada: Resumen
    └── Salida: Confirmación de envío
 ```
 
@@ -383,15 +367,13 @@ Especifica la configuración exacta del Schedule Trigger:
 
 | Parámetro | Valor | Justificación |
 |-----------|-------|---------------|
-| Trigger Times → Rule | Cron Expression | Permite especificar días laborables y hora exacta |
-| Hora | 8 | Resumen listo al inicio de la jornada |
-| Minuto | 0 | Ejecución en punto |
-| Días de la semana | Lunes a Viernes (1-5) | Solo laborables |
-| Zona horaria | Europe/Madrid | Para que las 8:00 sean hora local |
+| Trigger Times → Rule | Cron Expression | Permite especificar días/hora exactos |
+| Hora | 8 | Resumen diario al inicio de jornada |
+| Minuto | 0 | En punto |
+| Días de la semana | Lunes a viernes (1-5) | Solo laborables |
+| Zona horaria | Europe/Madrid | Hora local (España) |
 
 **Pregunta**: ¿Qué ocurre si el servidor de n8n está apagado a las 8:00? ¿Se ejecutará el workflow cuando el servidor vuelva a estar online? Investiga el comportamiento de n8n en este caso.
-
-**Respuesta (resumen):** Por defecto, si n8n está apagado cuando toca el disparo, esa ejecución se pierde y **no** se “reproduce” automáticamente al volver online (salvo configuraciones específicas/estrategias externas). Para mitigarlo: monitorizar el servicio, reinicios automáticos, alertas y/o un diseño idempotente con “catch-up” (por ejemplo, pedir noticias del último día al arrancar).
 
 ### Parte C: Diseño del Nodo HTTP Request (5 min)
 
@@ -402,27 +384,15 @@ Para obtener las noticias, usarás la API gratuita de NewsAPI (https://newsapi.o
 | Method | `GET` |
 | URL | `https://newsapi.org/v2/everything` |
 | Query Parameters | |
-| → `q` | `"artificial intelligence" OR "inteligencia artificial" OR "AI agents"` |
-| → `language` | `es` *(si también quieres inglés, duplica el nodo HTTP Request con `en` y une con un nodo Merge)* |
+| → `q` | `("inteligencia artificial" OR "artificial intelligence" OR "AI")` |
+| → `language` | `es` (duplicar el nodo para `en` y luego hacer Merge) |
 | → `sortBy` | `publishedAt` |
 | → `pageSize` | `10` |
-| Authentication | Header Auth / API Key en header |
+| Authentication | Predefined Credential Type → Header Auth |
 | → Header Name | `X-Api-Key` |
 | → Header Value | `{{ $credentials.newsApiKey }}` |
 
-**Valores propuestos (ejemplo):**
-
-| Parámetro | Valor |
-|-----------|-------|
-| → `q` | `"artificial intelligence" OR "inteligencia artificial" OR "AI agents"` |
-| → `language` | `es` *(si también quieres inglés, duplica el nodo HTTP Request con `en` y une con un nodo Merge)* |
-| → `sortBy` | `publishedAt` |
-| → `pageSize` | `10` |
-| Authentication | Header Auth / API Key en header |
-
 **Pregunta**: ¿Por qué es importante usar `$credentials` en lugar de poner la API key directamente en el nodo? ¿Cómo se configuran las credenciales en n8n?
-
-**Respuesta:** Porque `$credentials` hace que la key se almacene **cifrada** y separada del workflow: no se expone al exportar/compartir, se rota sin editar nodos, y centraliza permisos. Se configura en n8n en **Settings → Credentials**, creando un tipo de credencial (p.ej. Header Auth) y seleccionándola luego en el nodo.
 
 ### Parte D: Diseño del Prompt para el Resumen (5 min)
 
@@ -430,17 +400,9 @@ Escribe el System Prompt que usarías en el nodo de OpenAI (o el modelo de IA qu
 
 ```
 System Prompt:
-Eres un asistente especializado en resumir noticias de inteligencia artificial para un equipo técnico.
-
-Genera un resumen diario con las siguientes características:
-- Título: "Resumen de IA - [fecha de hoy]"
-- Incluye entre 3 y 5 noticias destacadas
-- Para cada noticia incluye: título, fuente, resumen de 2-3 frases y enlace original
-- Organiza las noticias por relevancia (de mayor a menor impacto)
-- Al final, incluye una sección "Tendencia del día" con una reflexión breve sobre el tema dominante
-- Escribe en español, con tono profesional e informativo
-- Usa formato HTML para que el email se vea bien formateado
-- Longitud total: máximo 500 palabras
+Eres un analista de noticias especializado en IA.
+Recibirás una lista de artículos (título, descripción, fuente y URL). Selecciona solo los artículos en español o inglés.
+Genera un resumen diario en Markdown (máx. 5-8 bullets) con: titular, fuente, 1 frase de contexto y enlace.
 ```
 
 **Consideraciones para el prompt:**
@@ -453,16 +415,11 @@ Genera un resumen diario con las siguientes características:
 ### Preguntas de Reflexión
 
 1. ¿Cómo manejarías el caso en que la API de noticias devuelve un error (ej: límite de peticiones excedido)? ¿Qué nodo añadirías y dónde?
+   - **Respuesta**: Añadiría un nodo **Error Trigger** (para alertas) y/o **IF** tras el HTTP Request para comprobar `statusCode`/`error`. También usaría **Wait** + reintentos (Retry on fail) y enviaría un email/Slack al equipo si falla.
 2. Si quisieras enviar el resumen también por Slack además de por email, ¿cómo modificarías el diagrama? ¿Los nodos de Gmail y Slack irían en paralelo o en serie?
+   - **Respuesta**: Tras generar el resumen, pondría Gmail y Slack **en paralelo** (dos ramas desde el mismo nodo) para que un fallo de Slack no bloquee el email (o viceversa).
 3. ¿Qué ventaja tiene programar el workflow a las 8:00 en vez de ejecutarlo manualmente cada mañana? Más allá del ahorro de tiempo, ¿qué otros beneficios aporta la automatización?
-
-**Respuestas (ejemplo):**
-
-1. Añadiría un nodo de manejo de errores alrededor del `HTTP Request` (p.ej. continuar con error + rama IF sobre `statusCode`, o un nodo `Error Trigger` para capturar fallos). En caso de 429/5xx: reintentos con backoff, registrar el fallo (DB/Sheet), y enviar un email/Slack de alerta al equipo.
-
-2. Los nodos de Gmail y Slack irían en **paralelo** desde la salida del resumen (dos ramas) para que un fallo en Slack no bloquee el email (o viceversa). Si necesito garantizar orden (primero email, luego Slack) podría ir en serie, pero normalmente paralelo es más robusto.
-
-3. Beneficios adicionales: consistencia (siempre a la misma hora), trazabilidad (logs/ejecuciones), reducción de errores humanos, posibilidad de monitorización y alertas, y escalabilidad (mismo patrón para varios equipos/temas).
+   - **Respuesta**: Consistencia y trazabilidad (logs), menor riesgo de olvidos, posibilidad de alertar si no hay noticias o si hay fallos, y escalabilidad (mismo patrón para más equipos/temas).
 
 ---
 
@@ -624,16 +581,6 @@ Si la ejecución falla, consulta esta tabla:
 3. Si quisieras usar Claude (Anthropic) en lugar de OpenAI, ¿qué cambiarías en la configuración? ¿n8n soporta múltiples proveedores de IA?
 4. ¿Qué ventajas e inconvenientes tiene usar un servicio como OpenRouter frente a usar directamente la API del proveedor (OpenAI, Anthropic, etc.)? Considera aspectos como coste, latencia, disponibilidad y variedad de modelos.
 
-**Respuestas (ejemplo):**
-
-1. El nodo nativo simplifica (URL/headers/body) y reduce errores; HTTP Request da control total (endpoints avanzados, proveedores compatibles, headers extra, debugging). Usaría nodo nativo para rapidez y mantenibilidad; HTTP Request cuando necesito algo no soportado o multi‑proveedor.
-
-2. Al exportar un workflow, las credenciales **no** se incluyen (solo una referencia). Es importante para evitar fugas de API keys y porque cada entorno debe gestionar sus secretos de forma separada.
-
-3. Cambiaría endpoint y formato: Anthropic usa `https://api.anthropic.com/v1/messages` y headers como `x-api-key` (y versiones). n8n soporta múltiples proveedores (OpenAI, Anthropic, Gemini, Ollama, etc.), según versión y nodos disponibles.
-
-4. OpenRouter: ventaja en variedad de modelos y, a veces, coste (incluye modelos free), unifica APIs y facilita experimentar. Inconvenientes: capa extra (latencia), dependencia de un intermediario, posibles diferencias de compatibilidad y trazabilidad/observabilidad; además, políticas de uso y disponibilidad dependen del agregador.
-
 ---
 
 ## Ejercicio 6: Exploración de Templates de n8n
@@ -668,10 +615,10 @@ n8n cuenta con una biblioteca pública de templates (plantillas) con cientos de 
 
 | Búsqueda | Número de resultados |
 |----------|---------------------|
-| "AI Agent" | 3085 |
-| "OpenAI" | 3146 |
-| "chatbot" | 174 |
-| "email automation" | 21 |
+| "AI Agent" | ~200 (estimado; el site renderiza resultados con JS y el conteo no aparece en HTML plano) |
+| "OpenAI" | ~800 (estimado; mismo motivo) |
+| "chatbot" | ~300 (estimado; mismo motivo) |
+| "email automation" | ~250 (estimado; mismo motivo) |
 
 ### Parte B: Selección y Análisis de Templates (7 min)
 
@@ -681,76 +628,66 @@ Busca y selecciona **3 templates** que sean relevantes para construir agentes de
 
 | Aspecto | Descripción |
 |---------|-------------|
-| Nombre del template | AI agent chat |
-| URL | https://n8n.io/workflows/1954-ai-agent-chat/ |
-| Descripción breve | Agente conversacional con OpenAI, búsqueda web y memoria buffer para mantener contexto |
-| Nodos que utiliza (listado) | AI Agent, OpenAI Chat Model, Simple Memory (Window Buffer), Chat Trigger (interfaz de chat), SerpAPI Tool |
+| Nombre del template | Build your first AI agent |
+| URL | https://n8n.io/workflows/6270-build-your-first-ai-agent/ |
+| Descripción breve | Chatbot con nodo AI Agent, memoria conversacional y dos herramientas (weather + RSS news) para demostrar “razonamiento + tools”. |
+| Nodos que utiliza (listado) | Chat Trigger, AI Agent, Conversation Memory, Google Gemini (connect your model), HTTP Request (weather), RSS (read feed), Sticky Note |
 | ¿Usa nodo AI Agent? | Sí |
-| ¿Incluye memoria? | Sí (Simple Memory / Window Buffer) |
-| ¿Qué herramientas (tools) usa el agente? | SerpAPI (búsqueda web) |
-| ¿Qué trigger lo inicia? | Chat Trigger |
-| Complejidad estimada (Baja/Media/Alta) | Media |
-| ¿Podrías usarlo como base para un proyecto propio? | Sí: sirve como base para un asistente con herramientas + memoria |
+| ¿Incluye memoria? | Sí (Conversation Memory / Window Buffer) |
+| ¿Qué herramientas (tools) usa el agente? | Get Weather (forecast) y Get News (RSS) |
+| ¿Qué trigger lo inicia? | Chat Trigger (interfaz de chat embebida) |
+| Complejidad estimada (Baja/Media/Alta) | Baja |
+| ¿Podrías usarlo como base para un proyecto propio? | Sí, como “esqueleto” de agente; solo hay que cambiar modelo, prompt y tools. |
 
 **Template 2:**
 
 | Aspecto | Descripción |
 |---------|-------------|
-| Nombre del template | Build your first AI agent |
-| URL | https://n8n.io/workflows/6270-build-your-first-ai-agent/ |
-| Descripción breve | Plantilla didáctica para crear un AI Agent con chat, herramientas y memoria de conversación |
-| Nodos que utiliza (listado) | Chat Trigger, AI Agent, Google Gemini Chat Model, Conversation Memory, herramientas (Get Weather, Get News/RSS) |
+| Nombre del template | Chat with a database using AI |
+| URL | https://n8n.io/workflows/2090-chat-with-a-database-using-ai/ |
+| Descripción breve | Permite preguntar en lenguaje natural por datos de una base de datos (Postgres/MySQL/SQLite) usando un AI Agent conectado a un LLM. |
+| Nodos que utiliza (listado) | Chat Trigger (chat embebido), AI Agent, OpenAI Chat Model, nodo(s) de base de datos (Postgres/MySQL/SQLite), Sticky Note |
 | ¿Usa nodo AI Agent? | Sí |
-| ¿Incluye memoria? | Sí (Conversation Memory / buffer) |
-| ¿Qué herramientas (tools) usa el agente? | Tool de Weather + Tool de lectura de RSS/News |
-| ¿Qué trigger lo inicia? | Chat Trigger (Example Chat) |
-| Complejidad estimada (Baja/Media/Alta) | Baja |
-| ¿Podrías usarlo como base para un proyecto propio? | Sí: es un esqueleto claro para añadir Gmail/Calendar/HTTP tools |
+| ¿Incluye memoria? | No (no se menciona memoria; puede añadirse si se necesita contexto) |
+| ¿Qué herramientas (tools) usa el agente? | Herramienta de consulta a la base de datos (query) / lectura de tablas (según DB) |
+| ¿Qué trigger lo inicia? | Chat Trigger (embedded chat) |
+| Complejidad estimada (Baja/Media/Alta) | Media |
+| ¿Podrías usarlo como base para un proyecto propio? | Sí, muy bueno para BI interno/FAQ de datos con control de permisos. |
 
 **Template 3:**
 
 | Aspecto | Descripción |
 |---------|-------------|
-| Nombre del template | Local chatbot with retrieval augmented generation (RAG) |
-| URL | https://n8n.io/workflows/5148-local-chatbot-with-retrieval-augmented-generation-rag/ |
-| Descripción breve | Chatbot RAG 100% local con Ollama + Qdrant para responder usando PDFs cargados |
-| Nodos que utiliza (listado) | AI Agent, Ollama Chat Model, (pipeline de ingesta de PDFs), Qdrant (vector DB) / retrieval, nodos auxiliares de carga/segmentación |
-| ¿Usa nodo AI Agent? | Sí |
-| ¿Incluye memoria? | No indicado en la ficha (se puede añadir Simple/Conversation Memory) |
-| ¿Qué herramientas (tools) usa el agente? | Herramienta de retrieval/búsqueda semántica contra Qdrant |
-| ¿Qué trigger lo inicia? | Chatbot (interfaz de chat) + ejecución previa de ingesta de documentos |
-| Complejidad estimada (Baja/Media/Alta) | Alta |
-| ¿Podrías usarlo como base para un proyecto propio? | Sí: excelente base para soporte interno/FAQ sobre documentos |
+| Nombre del template | Basic automatic Gmail email labelling with OpenAI and Gmail API |
+| URL | https://n8n.io/workflows/2740-basic-automatic-gmail-email-labelling-with-openai-and-gmail-api/ |
+| Descripción breve | Clasifica emails automáticamente usando etiquetas existentes de Gmail; si no hay etiqueta adecuada, crea una nueva y la aplica. |
+| Nodos que utiliza (listado) | Gmail Trigger, Gmail (Read Labels / Get Message / Add Label / Create Label), OpenAI Chat Model, Wait, Memory Buffer, Sticky Note |
+| ¿Usa nodo AI Agent? | No (usa OpenAI Chat Model para clasificación) |
+| ¿Incluye memoria? | Sí (Memory Buffer) |
+| ¿Qué herramientas (tools) usa el agente? | No aplica como “agente”; usa Gmail como acciones (crear/aplicar labels) |
+| ¿Qué trigger lo inicia? | Gmail Trigger (polling cada 5 min) |
+| Complejidad estimada (Baja/Media/Alta) | Media |
+| ¿Podrías usarlo como base para un proyecto propio? | Sí, ideal para inbox cero; hay que ajustar prompt/reglas de etiquetado. |
 
 ### Parte C: Comparación y Patrones (3 min)
 
 Responde las siguientes preguntas basándote en los 3 templates seleccionados:
 
 1. **Patrón común**: ¿Qué nodos aparecen en los 3 templates? ¿Hay un patrón de diseño recurrente?
+   - **Respuesta**: Patrón recurrente: **Trigger → LLM/Agente → Acción(s) en herramientas**. En los 3 aparecen nodos de “entrada” (Chat Trigger o Gmail Trigger) y algún nodo de IA (AI Agent u OpenAI Chat Model).
 2. **Trigger más frecuente**: ¿Qué tipo de trigger es el más utilizado en templates de agentes de IA? ¿Por qué crees que es así?
+   - **Respuesta**: Para agentes conversacionales, el más típico es **Chat Trigger** (permite probar rápido con chat embebido). Para automatizaciones, triggers de polling (Gmail Trigger/Schedule).
 3. **Memoria**: De los templates que incluyen memoria, ¿qué tipo de memoria usan (Window Buffer, PostgreSQL, etc.)? ¿Cómo afecta el tipo de memoria al comportamiento del agente?
-
-**Respuestas (ejemplo):**
-
-1. Patrón común: `Chat Trigger → AI Agent → (Chat Model) → (Tools) → (Memory opcional)`. Casi siempre hay un nodo de chat + AI Agent + un modelo (OpenAI/Gemini/Ollama).
-
-2. Trigger más frecuente: `Chat Trigger`, porque la interacción típica de un agente es conversacional y el trigger facilita probar y depurar rápidamente.
-
-3. Memoria: en plantillas sencillas suele ser buffer/ventana (Simple/Conversation Memory). Eso permite follow‑ups coherentes dentro de la conversación, pero no persiste a largo plazo. Para persistencia real (entre sesiones) se suele usar DB (PostgreSQL/Supabase) o stores de conversación.
+   - **Respuesta**: Suelen usar **Window Buffer / Memory Buffer** (memoria corta). Da coherencia a follow-ups, pero puede olvidar a largo plazo. Persistente (Postgres/vector DB) permite contexto histórico pero requiere diseño de retención/privacidad.
 
 ### Preguntas de Reflexión
 
 1. ¿Es mejor crear un workflow desde cero o partir de un template existente? ¿En qué situaciones preferirías cada enfoque?
+   - **Respuesta**: Template para acelerar y copiar patrones probados; desde cero cuando hay requisitos estrictos (seguridad, compliance, arquitectura) o necesitas control total y mínima deuda.
 2. Los templates de la comunidad pueden estar desactualizados o usar versiones antiguas de nodos. ¿Cómo verificarías que un template sigue siendo funcional antes de usarlo en un proyecto real?
+   - **Respuesta**: Importar en un entorno de pruebas, revisar versión mínima de n8n, ejecutar con datos dummy, validar credenciales/nodos rotos y comprobar logs/errores.
 3. Si tuvieras que crear un template para compartir con la comunidad, ¿qué workflow diseñarías? ¿Qué problema resolvería?
-
-**Respuestas (ejemplo):**
-
-1. Template cuando quieres velocidad y aprender patrones; desde cero cuando el flujo es muy específico, hay requisitos de seguridad estrictos o necesitas minimizar dependencias.
-
-2. Importarlo en un entorno de prueba, revisar versión mínima requerida, ejecutar con datos dummy, validar credenciales/nodos obsoletos, y comprobar que los nodos usados siguen existiendo en tu versión de n8n.
-
-3. Haría un “Agente de Soporte con RAG + escalado”: Webhook/Chat Trigger, búsqueda semántica en documentación, respuestas con fuentes, creación de ticket si baja confianza, y logging de métricas.
+   - **Respuesta**: Un “triage” de emails/tickets con IA: clasifica, asigna prioridad, redacta respuesta sugerida y escala según riesgo/SLAs.
 
 ---
 
@@ -906,17 +843,16 @@ Usar `$credentials` es fundamental porque: (1) la API key se almacena cifrada en
 ### Parte D: System Prompt
 
 ```
-Eres un asistente especializado en resumir noticias de inteligencia artificial para un equipo técnico.
+Eres un asistente que genera un resumen diario de noticias sobre IA para un equipo profesional.
+Recibirás una lista de artículos con campos: title, description, source.name, url.
 
-Genera un resumen diario con las siguientes características:
-- Título: "Resumen de IA - [fecha de hoy]"
-- Incluye entre 3 y 5 noticias destacadas
-- Para cada noticia incluye: título, fuente, resumen de 2-3 frases y enlace original
-- Organiza las noticias por relevancia (de mayor a menor impacto)
-- Al final, incluye una sección "Tendencia del día" con una reflexión breve sobre el tema dominante
-- Escribe en español, con tono profesional e informativo
-- Usa formato HTML para que el email se vea bien formateado
-- Longitud total: máximo 500 palabras
+Tareas:
+1) Filtra y usa solo artículos en español o inglés.
+2) Selecciona máximo 10 artículos; evita duplicados o titulares muy similares.
+3) Produce un resumen en Markdown con:
+   - Título del día.
+   - 5–8 bullets, cada bullet: **Titular** (Fuente) — 1 frase de contexto. [Enlace](URL)
+4) Mantén tono informativo y neutral. No inventes datos.
 ```
 
 </details>
